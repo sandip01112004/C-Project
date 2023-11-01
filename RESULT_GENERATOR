@@ -1,0 +1,203 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <fstream>
+#include <iomanip>
+
+using namespace std;
+
+const int NUM_SUBJECTS = 6; 
+const string SUBJECT_NAMES[NUM_SUBJECTS] = {"Math", "AEC", "A&DC", "OOPs", "UHV","DT"};
+const int MAX_MARKS = 30; // Maximum marks
+
+class Student {
+public:
+    string name;
+    int rollNo;
+    int marks[NUM_SUBJECTS];
+    int totalMarks;
+
+    void inputStudentInfo() {
+        cout << "Enter the name of student: ";
+        cin.ignore();
+        getline(cin, name);
+        cout << "Enter the roll number of student: ";
+        cin >> rollNo;
+
+        totalMarks = 0; // Initialize total marks to 0
+
+        for (int i = 0; i < NUM_SUBJECTS; i++) {
+            cout << "Enter the marks in " << SUBJECT_NAMES[i] << ": ";
+            cin >> marks[i];
+            totalMarks += marks[i];
+        }
+    }
+};
+
+bool compareStudents(const Student& s1, const Student& s2) {
+    return s1.totalMarks > s2.totalMarks;
+}
+
+void displayRanks(const vector<Student>& students) {
+    cout << "Rank\tName\tRoll No\tTotal Marks\n";
+    for (int i = 0; i < students.size(); i++) {
+        cout << i + 1 << "\t""\t" << students[i].name << "\t""\t" << students[i].rollNo << "\t""\t" << students[i].totalMarks << "\n";
+    }
+}
+
+void displaySubjectAverages(const vector<Student>& students) {
+    double subjectTotal[NUM_SUBJECTS] = {0};
+    int studentCount = students.size();
+
+    for (int i = 0; i < studentCount; i++) {
+        for (int j = 0; j < NUM_SUBJECTS; j++) {
+            subjectTotal[j] += students[i].marks[j];
+        }
+    }
+
+    cout << "Subject-wise Averages:\n";
+    for (int i = 0; i < NUM_SUBJECTS; i++) {
+        double average = subjectTotal[i] / studentCount;
+        cout << SUBJECT_NAMES[i] << " Average: " << fixed << setprecision(2) << average << "\n";
+    }
+}
+
+void displayStudentResults(const vector<Student>& students, int rollNo) {
+    bool found = false;
+    for (int i = 0; i < students.size(); i++) {
+        if (students[i].rollNo == rollNo) {
+            cout << "Results for Student with Roll No " << rollNo << ":\n";
+            cout << "Name: " << students[i].name << "\n";
+            cout << "Roll No: " << students[i].rollNo << "\n";
+            cout << "Subject-wise Marks:\n";
+            for (int j = 0; j < NUM_SUBJECTS; j++) {
+                cout << SUBJECT_NAMES[j] << ": " << students[i].marks[j] << "\n";
+            }
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        cout << "Student with Roll No " << rollNo << " not found.\n";
+    }
+}
+
+void writeStudentData(const vector<Student>& students, const string& filename) {
+    ofstream outFile(filename.c_str());
+
+    if (!outFile) {
+        cerr << "Error opening file for writing." << endl;
+        return;
+    }
+
+    for (int i = 0; i < students.size(); i++) {
+        outFile << students[i].name << '\n';
+        outFile << students[i].rollNo << '\n';
+        for (int j = 0; j < NUM_SUBJECTS; j++) {
+            outFile << students[i].marks[j] << ' ';
+        }
+        outFile << students[i].totalMarks << '\n';
+    }
+
+    outFile.close();
+    cout << "Data written to " << filename << " successfully." << endl;
+}
+
+void readStudentData(vector<Student>& students, const string& filename) {
+    ifstream inFile(filename.c_str());
+
+    if (!inFile) {
+        cerr << "Error opening file for reading." << endl;
+        return;
+    }
+
+    Student student;
+    while (inFile) {
+        getline(inFile, student.name);
+        inFile >> student.rollNo;
+        for (int j = 0; j < NUM_SUBJECTS; j++) {
+            inFile >> student.marks[j];
+        }
+        inFile >> student.totalMarks;
+        if (inFile) {
+            students.push_back(student);
+        }
+    }
+
+    inFile.close();
+    cout << "Data read from " << filename << " successfully." << endl;
+}
+
+int main() {
+    vector<Student> students;
+    const string dataFileName = "student_data.txt";
+
+    int choice;
+
+    cout << "Select an option:" << endl;
+    cout << "1. Input student data" << endl;
+    cout << "2. Display all ranks" << endl;
+    cout << "3. Display subject averages" << endl;
+    cout << "4. Display student results by roll number" << endl;
+    cout << "5. Write student data to a file" << endl;
+    cout << "6. Read student data from a file" << endl;
+    cout << "7. Exit" << endl;
+
+    while (true) {
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                students.clear();
+                int numStudents;
+                cout << "Enter the number of students: ";
+                cin >> numStudents;
+                for (int i = 0; i < numStudents; i++) {
+                    Student student;
+                    student.inputStudentInfo();
+                    students.push_back(student);
+                }
+                break;
+            case 2:
+                if (students.empty()) {
+                    cout << "No student data available. Please input data first." << endl;
+                } else {
+                    sort(students.begin(), students.end(), compareStudents);
+                    displayRanks(students);
+                }
+                break;
+            case 3:
+                if (students.empty()) {
+                    cout << "No student data available. Please input data first." << endl;
+                } else {
+                    displaySubjectAverages(students);
+                }
+                break;
+            case 4:
+                if (students.empty()) {
+                    cout << "No student data available. Please input data first." << endl;
+                } else {
+                    int rollNo;
+                    cout << "Enter the roll number of the student: ";
+                    cin >> rollNo;
+                    displayStudentResults(students, rollNo);
+                }
+                break;
+            case 5:
+                if (students.empty()) {
+                    cout << "No student data available to write. Please input data first." << endl;
+                } else {
+                    writeStudentData(students, dataFileName);
+                }
+                break;
+            case 6:
+                readStudentData(students, dataFileName);
+                break;
+            case 7:
+                cout<<"Thank you for using Result Generator !";
+            default:
+            cout<<"end";
+        }
+    }
+}
